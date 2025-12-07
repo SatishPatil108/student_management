@@ -18,7 +18,7 @@ const useAdminNavbar = () => {
             ];
         if (user.role == "student")
             navLinks = [
-                { name: 'my details', path: '/dashboard' },
+                { name: 'my details', path: '/my_details' },
                 { name: 'logout', path: '/logout' },
             ];
     }

@@ -70,7 +70,7 @@ const MyDetails = () => {
             <div className="max-w-6xl mx-auto">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                     <div className="flex items-center gap-4">
-                        <div className="h-16 w-16 shrink-0 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                        <div className="h-16 w-16 shrink-0 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center">
                             <User className="w-8 h-8 text-white" />
                         </div>
                         <div>
@@ -97,8 +97,8 @@ const MyDetails = () => {
                     {/* Profile Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
                         <div className="flex items-center gap-4">
-                            <div className="h-24 w-24 shrink-0 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-2xl flex items-center justify-center">
-                                <div className="h-20 w-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <div className="h-24 w-24 shrink-0 bg-linear-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-2xl flex items-center justify-center">
+                                <div className="h-20 w-20 bg-linear-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
                                     <span className="text-2xl font-bold text-white">
                                         {myDetails.name?.charAt(0) || "U"}
                                     </span>
@@ -171,7 +171,7 @@ const MyDetails = () => {
 
                 {/* Stats Cards (Optional) */}
                 <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 p-6 rounded-2xl border border-blue-200 dark:border-blue-800">
+                    <div className="bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 p-6 rounded-2xl border border-blue-200 dark:border-blue-800">
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-2 bg-blue-100 dark:bg-blue-800/30 rounded-lg">
                                 <Award className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -185,7 +185,7 @@ const MyDetails = () => {
                         </h3>
                     </div>
                     
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/10 p-6 rounded-2xl border border-green-200 dark:border-green-800">
+                    <div className="bg-linear-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/10 p-6 rounded-2xl border border-green-200 dark:border-green-800">
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-2 bg-green-100 dark:bg-green-800/30 rounded-lg">
                                 <User className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -199,7 +199,7 @@ const MyDetails = () => {
                         </h3>
                     </div>
                     
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/10 p-6 rounded-2xl border border-purple-200 dark:border-purple-800">
+                    <div className="bg-linear-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/10 p-6 rounded-2xl border border-purple-200 dark:border-purple-800">
                         <div className="flex items-center justify-between mb-4">
                             <div className="p-2 bg-purple-100 dark:bg-purple-800/30 rounded-lg">
                                 <Mail className="w-6 h-6 text-purple-600 dark:text-purple-400" />

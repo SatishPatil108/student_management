@@ -1,6 +1,5 @@
 import { Routes, Route } from "react-router-dom";
 import AdminRoutes from "./AdminRoutes";
-import StudentRoutes from "./StudentRoutes";
 
 const AppRoutes = () => (
   <Routes>

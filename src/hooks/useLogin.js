@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { createUserIfNotExistService, loginAPI } from "../services/services";
-// import { loginAPI } from "../../services/api";
 
 const useLogin = () => {
     const navigate = useNavigate();

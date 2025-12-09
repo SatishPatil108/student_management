@@ -3,7 +3,6 @@ import { useAppContext } from "../../context/AppContext";
 // useAdminNavbar.js
 const useAdminNavbar = () => {
     const { user } = useAppContext();
-    console.log(user);
     let navLinks;
     if (!user) {
         navLinks = [
@@ -23,7 +22,15 @@ const useAdminNavbar = () => {
             ];
     }
 
-    return { navLinks };
+    const viewLink = [
+        { name: 'Default View', path: '/students' },
+        { name: 'Gallery View', path: '/gallery' },
+        { name: 'Kanban', path: '/kanban' },
+        { name: 'Timeline', path: '/timeline' },
+        { name: 'Calendar', path: '/calendar' },
+    ]
+
+    return { navLinks, viewLink };
 };
 
 export default useAdminNavbar;

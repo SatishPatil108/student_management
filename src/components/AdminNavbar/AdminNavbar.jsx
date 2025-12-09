@@ -6,7 +6,8 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 
 const AdminNavbar = () => {
    
-    const { navLinks } = useAdminNavbar();
+    const { navLinks, viewLink } = useAdminNavbar();
+
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,7 +42,6 @@ const AdminNavbar = () => {
                         </NavLink>
                     ))}
                 </div>
-
                 
 
                 {/* Mobile Menu Button */}

@@ -11,25 +11,32 @@ import {
     Users,
     UserPlus,
     X,
-    Check
+    Check,
+    ChevronDown,
+    ChevronUp,
+    Search,
+    Filter
 } from 'lucide-react';
 import useStudentList from '../../../hooks/useStudentsList';
 
 const StudentsList = () => {
-    const { 
-        students, 
+    const {
+        students,
         allFields,
-        handleAddStudent, 
-        handleEditStudent, 
-        handleDeleteStudent 
+        handleAddStudent,
+        handleEditStudent,
+        handleDeleteStudent
     } = useStudentList();
-    
+
     // drawer and other state
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [editingStudent, setEditingStudent] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [errors, setErrors] = useState({});
     const [firstError, setFirstError] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [expandedRow, setExpandedRow] = useState(null);
+    const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' });
 
     // Initialize form based on fields
     const initializeForm = () => {
@@ -46,7 +53,7 @@ const StudentsList = () => {
     // Handle change for form inputs
     const handleChange = (e) => {
         const { name, value, type, files } = e.target;
-        
+
         if (type === 'file') {
             setStudentForm({ ...studentForm, [name]: files[0] });
         } else {
@@ -75,7 +82,7 @@ const StudentsList = () => {
 
         allFields.forEach(field => {
             const value = studentForm[field.key] || '';
-            
+
             if (field.required && !value.trim()) {
                 errors[field.key] = `${field.label} is required.`;
                 isValid = false;
@@ -138,14 +145,14 @@ const StudentsList = () => {
     // Handle edit student
     const handleEditBtnClick = (student) => {
         const formData = { ...student };
-        
+
         // Ensure all fields are present in the form
         allFields.forEach(field => {
             if (!(field.key in formData)) {
                 formData[field.key] = '';
             }
         });
-        
+
         setStudentForm(formData);
         setEditingStudent(true);
         setShowForm(true);
@@ -155,14 +162,14 @@ const StudentsList = () => {
     // Handle view student details
     const handleViewStudent = (student) => {
         const formData = { ...student };
-        
+
         // Ensure all fields are present in the form
         allFields.forEach(field => {
             if (!(field.key in formData)) {
                 formData[field.key] = '';
             }
         });
-        
+
         setStudentForm(formData);
         setEditingStudent(false);
         setShowForm(false);
@@ -186,8 +193,8 @@ const StudentsList = () => {
             placeholder: field.placeholder || `Enter ${field.label.toLowerCase()}`,
             className: `w-full pl-10 pr-4 py-3 border rounded-lg shadow-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700
                 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-200
-                ${errors[field.key] 
-                    ? "border-red-500 focus:ring-red-500" 
+                ${errors[field.key]
+                    ? "border-red-500 focus:ring-red-500"
                     : "border-gray-300 dark:border-gray-600 focus:ring-purple-500 hover:border-purple-400"
                 }`,
         };
@@ -231,226 +238,495 @@ const StudentsList = () => {
         }
     };
 
-    return (
-        <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-gray-50 dark:bg-gray-900">
-            {/* Header Section */}
-            <div className="mb-8">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    // Filter students based on search
+    const filteredStudents = students.filter(student => {
+        if (!searchTerm) return true;
+        
+        const searchLower = searchTerm.toLowerCase();
+        return (
+            student.name?.toLowerCase().includes(searchLower) ||
+            student.email?.toLowerCase().includes(searchLower) ||
+            student.phone?.includes(searchTerm) ||
+            student.city?.toLowerCase().includes(searchLower) ||
+            student.passing_year?.includes(searchTerm) ||
+            student.marks?.includes(searchTerm)
+        );
+    });
+
+    // Sort students
+    const sortedStudents = [...filteredStudents].sort((a, b) => {
+        if (sortConfig.key === 'name') {
+            return sortConfig.direction === 'asc' 
+                ? (a.name || '').localeCompare(b.name || '')
+                : (b.name || '').localeCompare(a.name || '');
+        }
+        if (sortConfig.key === 'marks') {
+            return sortConfig.direction === 'asc'
+                ? parseInt(a.marks) - parseInt(b.marks)
+                : parseInt(b.marks) - parseInt(a.marks);
+        }
+        if (sortConfig.key === 'year') {
+            return sortConfig.direction === 'asc'
+                ? parseInt(a.passing_year) - parseInt(b.passing_year)
+                : parseInt(b.passing_year) - parseInt(a.passing_year);
+        }
+        // Default sort by ID
+        return sortConfig.direction === 'asc' ? a.id - b.id : b.id - a.id;
+    });
+
+    const handleSort = (key) => {
+        setSortConfig(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    const toggleRowExpand = (id) => {
+        setExpandedRow(expandedRow === id ? null : id);
+    };
+
+    // Mobile Card View
+    const StudentCard = ({ student }) => (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
+            {/* Card Header */}
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                            <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                        <div className="h-12 w-12 shrink-0 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                            <User className="w-6 h-6 text-purple-600 dark:text-purple-300" />
                         </div>
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
-                                Students
-                            </h1>
-                            <p className="text-gray-600 dark:text-gray-300 mt-1">
-                                Manage your students and their information
-                            </p>
+                            <div className="font-bold text-lg text-gray-900 dark:text-white">
+                                {student.name}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                ID: #{student.id.toString().padStart(4, '0')}
+                            </div>
                         </div>
                     </div>
                     <button
-                        onClick={handleAddBtnClick}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                        onClick={() => toggleRowExpand(student.id)}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                     >
-                        <Plus className="w-5 h-5" />
-                        Add New Student
+                        {expandedRow === student.id ? (
+                            <ChevronUp className="w-5 h-5 text-gray-500" />
+                        ) : (
+                            <ChevronDown className="w-5 h-5 text-gray-500" />
+                        )}
                     </button>
                 </div>
             </div>
 
-            {/* Students Table */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                                    Student
-                                </th>
-                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                                    Contact Information
-                                </th>
-                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {students.map((student) => (
-                                <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="h-10 w-10 shrink-0 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mr-3">
-                                                <User className="w-5 h-5 text-purple-600 dark:text-purple-300" />
-                                            </div>
-                                            <div>
-                                                <div className="font-medium text-gray-900 dark:text-white">
-                                                    {student.name}
-                                                </div>
-                                                <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                    Student ID: #{student.id.toString().padStart(4, '0')}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center gap-2 text-sm text-gray-900 dark:text-white mb-1">
-                                            <Mail className="w-4 h-4" />
-                                            {student.email}
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                                            <Phone className="w-4 h-4" />
-                                            {student.phone}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => handleViewStudent(student)}
-                                                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                                View
-                                            </button>
-                                            <button
-                                                onClick={() => handleEditBtnClick(student)}
-                                                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-md transition-colors"
-                                            >
-                                                <Edit2 className="w-4 h-4" />
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteBtnClick(student.id)}
-                                                className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {students.length === 0 && (
-                    <div className="text-center py-12">
-                        <div className="mx-auto w-16 h-16 text-gray-400 dark:text-gray-500 mb-4">
-                            <UserPlus className="w-full h-full" />
+            {/* Collapsible Content */}
+            {expandedRow === student.id && (
+                <div className="p-4 border-t border-gray-100 dark:border-gray-700">
+                    {/* Contact Info */}
+                    <div className="space-y-3 mb-4">
+                        <div className="flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-700 dark:text-gray-300">{student.email}</span>
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No students found</h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-4">Get started by adding your first student</p>
+                        <div className="flex items-center gap-2">
+                            <Phone className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-700 dark:text-gray-300">{student.phone}</span>
+                        </div>
+                        {student.city && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">City:</span>
+                                <span className="text-gray-700 dark:text-gray-300">{student.city}</span>
+                            </div>
+                        )}
+                        {student.marks && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">Marks:</span>
+                                <span className="text-gray-700 dark:text-gray-300">{student.marks}%</span>
+                            </div>
+                        )}
+                        {student.passing_year && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-500">Year:</span>
+                                <span className="text-gray-700 dark:text-gray-300">{student.passing_year}</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 pt-4 border-t border-gray-100 dark:border-gray-700">
                         <button
-                            onClick={handleAddBtnClick}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200"
+                            onClick={() => handleViewStudent(student)}
+                            className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                         >
-                            <Plus className="w-5 h-5" />
-                            Add Student
+                            <Eye className="w-4 h-4" />
+                            View
+                        </button>
+                        <button
+                            onClick={() => handleEditBtnClick(student)}
+                            className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-sm text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+                        >
+                            <Edit2 className="w-4 h-4" />
+                            Edit
+                        </button>
+                        <button
+                            onClick={() => handleDeleteBtnClick(student.id)}
+                            className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
                         </button>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
 
-            {/* Drawer */}
-            <CustomDrawer
-                isOpen={isDrawerOpen}
-                onClose={() => {
-                    setIsDrawerOpen(false);
-                    resetForm();
-                }}
-                title={showForm ? (editingStudent ? "Edit Student" : "Add New Student") : "Student Details"}
-                footer={
-                    showForm ? (
-                        <div className="flex justify-end gap-3">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsDrawerOpen(false);
-                                    resetForm();
-                                }}
-                                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
-                            >
-                                <X className="w-4 h-4" />
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                onClick={handleSubmit}
-                                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
-                            >
-                                <Check className="w-4 h-4" />
-                                {editingStudent ? 'Update Student' : 'Save Student'}
-                            </button>
-                        </div>
-                    ) : null
-                }
-            >
-                {showForm ? (
-                    <form
-                        className="flex-1 overflow-y-auto space-y-6 p-1"
-                        onSubmit={(e) => e.preventDefault()}
-                    >
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {allFields.map((field) => (
-                                <div 
-                                    key={field.id} 
-                                    className={field.type === 'textarea' ? 'lg:col-span-2' : ''}
-                                >
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        {field.label}
-                                        {field.required && <span className="text-red-500 ml-1">*</span>}
-                                    </label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            {getFieldIcon(field.type)}
-                                        </div>
-                                        {renderInputField(field)}
-                                    </div>
-                                    {errors[field.key] && (
-                                        <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-                                            {errors[field.key]}
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </form>
-                ) : (
-                    <div className="space-y-6">
-                        <div className="flex items-center gap-4">
-                            <div className="h-16 w-16 shrink-0 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center">
-                                <User className="w-8 h-8 text-purple-600 dark:text-purple-300" />
+            {/* Quick Actions (When collapsed) */}
+            {expandedRow !== student.id && (
+                <div className="p-4 pt-0">
+                    <div className="flex gap-2 mt-4">
+                        <button
+                            onClick={() => handleViewStudent(student)}
+                            className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                        >
+                            <Eye className="w-4 h-4" />
+                            View
+                        </button>
+                        <button
+                            onClick={() => handleEditBtnClick(student)}
+                            className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-sm text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+                        >
+                            <Edit2 className="w-4 h-4" />
+                            Edit
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+
+    return (
+        <div className="flex flex-col min-h-screen bg-white dark:bg-gray-900">
+            {/* Main Content Area */}
+            <div className="flex-1 p-4 md:p-6 lg:p-8">
+                {/* Header Section */}
+                <div className="mb-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                                <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                    {studentForm.name}
-                                </h3>
-                                <p className="text-gray-500 dark:text-gray-400">Student Profile</p>
+                                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
+                                    Students
+                                </h1>
+                                <p className="text-gray-600 dark:text-gray-300 mt-1">
+                                    Manage your students and their information
+                                </p>
                             </div>
                         </div>
+                        <button
+                            onClick={handleAddBtnClick}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                        >
+                            <Plus className="w-5 h-5" />
+                            <span className="hidden sm:inline">Add New Student</span>
+                            <span className="sm:hidden">Add Student</span>
+                        </button>
+                    </div>
+                </div>
 
-                        <div className="space-y-4">
-                            {allFields.map((field) => (
-                                studentForm[field.key] && (
-                                    <div key={field.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                                        <div className="p-2 bg-white dark:bg-gray-600 rounded-lg">
-                                            {getFieldIcon(field.type)}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">{field.label}</p>
-                                            <p className="font-medium text-gray-900 dark:text-white">
-                                                {studentForm[field.key]}
-                                            </p>
-                                        </div>
-                                    </div>
-                                )
-                            ))}
+                {/* Search and Filter Bar */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            <input
+                                type="text"
+                                placeholder="Search students by name, email, phone..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => handleSort('name')}
+                                className="flex items-center gap-1 px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                                <Filter className="w-4 h-4" />
+                                <span className="hidden sm:inline">Sort</span>
+                            </button>
                         </div>
                     </div>
-                )}
-            </CustomDrawer>
+                    {searchTerm && (
+                        <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                            Found {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}
+                        </div>
+                    )}
+                </div>
+
+                {/* Desktop Table View (hidden on mobile) */}
+                <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead className="bg-purple-500 dark:bg-gray-700 text-white">
+                                <tr>
+                                    <th 
+                                        scope="col" 
+                                        className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:bg-purple-600"
+                                        onClick={() => handleSort('name')}
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            Student
+                                            {sortConfig.key === 'name' && (
+                                                sortConfig.direction === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+                                            )}
+                                        </div>
+                                    </th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
+                                        Contact Information
+                                    </th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
+                                        Additional Info
+                                    </th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                {sortedStudents.map((student) => (
+                                    <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center">
+                                                <div className="h-10 w-10 shrink-0 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mr-3">
+                                                    <User className="w-5 h-5 text-purple-600 dark:text-purple-300" />
+                                                </div>
+                                                <div>
+                                                    <div className="font-medium text-gray-900 dark:text-white">
+                                                        {student.name}
+                                                    </div>
+                                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                        ID: #{student.id.toString().padStart(4, '0')}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2 text-sm text-gray-900 dark:text-white">
+                                                    <Mail className="w-4 h-4" />
+                                                    {student.email}
+                                                </div>
+                                                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                                    <Phone className="w-4 h-4" />
+                                                    {student.phone}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="space-y-1">
+                                                {student.city && (
+                                                    <div className="text-sm text-gray-700 dark:text-gray-300">
+                                                        📍 {student.city}
+                                                    </div>
+                                                )}
+                                                {student.marks && (
+                                                    <div className="text-sm text-gray-700 dark:text-gray-300">
+                                                        🎯 {student.marks}%
+                                                    </div>
+                                                )}
+                                                {student.passing_year && (
+                                                    <div className="text-sm text-gray-700 dark:text-gray-300">
+                                                        🎓 {student.passing_year}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleViewStudent(student)}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors"
+                                                    title="View Details"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                    <span className="hidden lg:inline">View</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleEditBtnClick(student)}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-md transition-colors"
+                                                    title="Edit Student"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                    <span className="hidden lg:inline">Edit</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteBtnClick(student.id)}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                                                    title="Delete Student"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                    <span className="hidden lg:inline">Delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {sortedStudents.length === 0 && (
+                        <div className="text-center py-12">
+                            <div className="mx-auto w-16 h-16 text-gray-400 dark:text-gray-500 mb-4">
+                                <UserPlus className="w-full h-full" />
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                                {searchTerm ? 'No students found' : 'No students available'}
+                            </h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-4">
+                                {searchTerm ? 'Try a different search term' : 'Get started by adding your first student'}
+                            </p>
+                            {!searchTerm && (
+                                <button
+                                    onClick={handleAddBtnClick}
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                    Add Student
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Mobile Card View (shown only on mobile) */}
+                <div className="md:hidden space-y-4">
+                    {sortedStudents.length === 0 ? (
+                        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                            <div className="mx-auto w-16 h-16 text-gray-400 dark:text-gray-500 mb-4">
+                                <UserPlus className="w-full h-full" />
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                                {searchTerm ? 'No students found' : 'No students available'}
+                            </h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-4">
+                                {searchTerm ? 'Try a different search term' : 'Get started by adding your first student'}
+                            </p>
+                            {!searchTerm && (
+                                <button
+                                    onClick={handleAddBtnClick}
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                    Add Student
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        sortedStudents.map((student) => (
+                            <StudentCard key={student.id} student={student} />
+                        ))
+                    )}
+                </div>
+
+                {/* Drawer */}
+                <CustomDrawer
+                    isOpen={isDrawerOpen}
+                    onClose={() => {
+                        setIsDrawerOpen(false);
+                        resetForm();
+                    }}
+                    title={showForm ? (editingStudent ? "Edit Student" : "Add New Student") : "Student Details"}
+                    footer={
+                        showForm ? (
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsDrawerOpen(false);
+                                        resetForm();
+                                    }}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                                >
+                                    <X className="w-4 h-4" />
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    onClick={handleSubmit}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+                                >
+                                    <Check className="w-4 h-4" />
+                                    {editingStudent ? 'Update' : 'Save'}
+                                </button>
+                            </div>
+                        ) : null
+                    }
+                >
+                    {showForm ? (
+                        <form
+                            className="flex-1 overflow-y-auto space-y-6 p-1"
+                            onSubmit={(e) => e.preventDefault()}
+                        >
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {allFields.map((field) => (
+                                    <div
+                                        key={field.id}
+                                        className={field.type === 'textarea' ? 'lg:col-span-2' : ''}
+                                    >
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            {field.label}
+                                            {field.required && <span className="text-red-500 ml-1">*</span>}
+                                        </label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                {getFieldIcon(field.type)}
+                                            </div>
+                                            {renderInputField(field)}
+                                        </div>
+                                        {errors[field.key] && (
+                                            <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                                                {errors[field.key]}
+                                            </p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </form>
+                    ) : (
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-4">
+                                <div className="h-16 w-16 shrink-0 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center">
+                                    <User className="w-8 h-8 text-purple-600 dark:text-purple-300" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                        {studentForm.name}
+                                    </h3>
+                                    <p className="text-gray-500 dark:text-gray-400">Student Profile</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                {allFields.map((field) => (
+                                    studentForm[field.key] && (
+                                        <div key={field.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                            <div className="p-2 bg-white dark:bg-gray-600 rounded-lg">
+                                                {getFieldIcon(field.type)}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">{field.label}</p>
+                                                <p className="font-medium text-gray-900 dark:text-white">
+                                                    {studentForm[field.key]}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </CustomDrawer>
+            </div>           
         </div>
     )
 }

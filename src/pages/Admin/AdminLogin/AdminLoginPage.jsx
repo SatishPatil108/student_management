@@ -26,7 +26,7 @@ const AdminLoginPage = () => {
     };
 
     return (
-        <div className="w-full min-h-screen flex justify-center items-center bg-gray-50 px-4">
+        <div className="w-full min-h-screen flex justify-center items-center px-4">
             <div className="w-full max-w-md">
                 {/* Header */}
                 <div className="text-center mb-8">
